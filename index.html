@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>フリーアドレス</title>
+    <link rel="stylesheet" href="style2.css">
+    <script  src="./js/index.js"></script>
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+</head>
+<body>
+
+    <h1>
+        <p class="title">本日の座席</p>
+    </h1>
+
+    <div class="step1">
+    <button  class="btn_circle" id="btn_set">自分の位置を登録する</button>
+    <button class="btn_circle" id="btn_check">他の人の位置を確認する</button>
+　　 </div>
+
+    <div class="set">
+    <button class="btn_rectangle" id="btn_geo" onclick="location.href='geolocation_string.html'">社外(現在地を読み込む)</button>
+    <button class="btn_rectangle" id="btn_qr">社内</button>
+　　</div>
+
+<div class="syanai">
+<th>名前：</th>
+<input type="text" id="namae">
+<div> フロア：<input type="text" id="floor">階 </div>
+<div> ブロック：<input type="text" id="block">側 </div>
+<div> 列：<input type="text" id="column">列目 </div>
+<button class="btn_set" id="syanai_set">登録</button>
+</div>
+
+  <!-- 登録位置情報の表示 -->
+  <div class="kakunin">
+
+  <table class="midashi_2">
+    <p id="syagai">社内</p>
+    <tr>
+      <th>登録日</th>
+      <th>名前</th>
+      <th>フロア(階)</th>
+      <th>ブロック(側)</th>
+      <th>列</th>
+    </tr>
+  </table>
+  <div id="output2"></div>
+
+  <table class="midashi">
+    <p id="syagai">社外</p>
+    <tr>
+      <th>登録日</th>
+      <th>名前</th>
+      <th>緯度</th>
+      <th>軽度</th>
+    </tr>
+  </table>
+  <div id="output"></div>
+
+  <div>
+
+  </div>
+
+
+</div>
+
+
+
+
+<!-- Firebase -->
+<script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+    // 貼り付ける場所
+    import { getDatabase, ref, push,set, onChildAdded, remove, onChildRemoved , serverTimestamp} from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+    //
+    
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+    
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+
+    };
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db, '05-js-kadai');
+    const dbRef2 = ref(db, '05-js-kadai-2');
+    const myTimestamp = serverTimestamp();
+    
+    // 登録
+$('#syanai_set').on('click', function () {
+  const namae = $('#namae').val();
+  const floor = $('#floor').val();
+  const block = $('#block').val();
+  const column = $('#column').val();
+
+  const syanai_data = {
+  time: myTimestamp,
+  namae: namae,
+  floor: floor,
+  block: block,
+  column: column,
+}
+
+// firebaseに送る準備をしていることになります🤗
+const newPostRef = push(dbRef2) //データを送信できる準備
+set(newPostRef, syanai_data); // firebaseの登録できる場所に保存するイメージです🤗
+
+});
+
+    // 受信処理を記述
+    $('#btn_check').on('click', function () {
+    onChildAdded(dbRef, function (data) {
+    // ここからが受信処理が始まります
+    
+    // 登録されたデータを取得します🤗
+    const geo_data = data.val();
+    console.log(geo_data, '取得したデータの塊')
+    const key = data.key;
+    console.log(key, 'データの塊にアクセス')
+    
+    // es6のテンプレートリテラル
+    let h = `
+        <tr>
+          <th>${Date(geo_data.time).slice(4, 25)}</th>
+          <td>${geo_data.uname}</td>
+          <td>${geo_data.lat}</td>
+          <td>${geo_data.lon}</td>
+          <td><button class="sarch">地図</button></td>
+        </tr>
+`
+    // htmlに埋め込みましょう🤗
+    // append();というjqueryのおまじないを使います
+    $("#output").append(h);
+    });
+});
+
+    // 受信処理を記述
+    $('#btn_check').on('click', function () {
+    onChildAdded(dbRef2, function (data) {
+    // ここからが受信処理が始まります
+    
+    // 登録されたデータを取得します🤗
+    const geo_data = data.val();
+    console.log(geo_data, '取得したデータの塊')
+    const key = data.key;
+    console.log(key, 'データの塊にアクセス')
+    
+    // es6のテンプレートリテラル
+
+　　　　let a = `
+         <tr>
+           <th>${Date(geo_data.time).slice(4, 25)}</th>
+           <td>${geo_data.namae}</td>
+           <td>${geo_data.floor}</td>
+           <td>${geo_data.block}</td>
+           <td>${geo_data.column}</td>
+         </tr>`;
+
+    // htmlに埋め込みましょう🤗
+    // append();というjqueryのおまじないを使います
+    $("#output2").append(a);
+    });
+});
+
+
+
+    </script>
+
+
+</body>
+</html>

@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>【社外】現在地</title>
+ <script src="js/BmapQuery.js"></script>
+ <script  src="./js/seat.js"></script>
+ <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+ <script src='https://www.bing.com/api/maps/mapcontrol?callback=GetMap&key=AiLSgEp6EKsKqhq1MVQJPDYNhvhy2HfpP6nWLKJZVj8SlU5qqvseYmirt-9bH7Vv' async
+   defer></script>
+ <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <h1>現在地の登録</h1>
+  <div>
+    <div class="name"> 名前：<input type="text" id="uname"> </div>
+    <div class="btn">
+    <button  class="btn_set" id="geo">現在地を読み込む</button>
+    <button class="btn_set" id="geo_set">登録</button>
+  </div>
+  </div>
+
+  <!-- MapArea -->
+  <div id="view"></div>
+  <div id="myMap" style="width:100%;height:100%;"></div>
+
+  <!-- 登録位置情報の表示 -->
+  <p>過去の登録履歴</p>
+  <table class="midashi">
+    <tr>
+      <th>登録日</th>
+      <th>名前</th>
+      <th>緯度</th>
+      <th>軽度</th>
+    </tr>
+  </table>
+  <div id="output"></div>
+  
+  <button class="back" onclick="location.href='index.html'">戻る </button>
+
+<!-- Firebase -->
+<script type="module">
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+// 貼り付ける場所
+import { getDatabase, ref, push,set, onChildAdded, remove, onChildRemoved , serverTimestamp} from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+//
+
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+
+};
+
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+const db = getDatabase(app);
+const dbRef = ref(db, '05-js-kadai');
+
+// 登録
+$('#geo_set').on('click', function () {
+  const lat = localStorage.getItem("centerLatitude");
+  const lon = localStorage.getItem("centerLongitude");
+  const time = localStorage.getItem("time");
+  const uname = $('#uname').val();
+
+  const geo_data = {
+  uname: uname,
+  lat: lat,
+  lon: lon,
+  time: time,
+}
+
+
+// firebaseに送る準備をしていることになります🤗
+const newPostRef = push(dbRef) //データを送信できる準備
+set(newPostRef, geo_data); // firebaseの登録できる場所に保存するイメージです🤗
+
+});
+
+// 受信処理を記述
+onChildAdded(dbRef, function (data) {
+// ここからが受信処理が始まります
+
+// 登録されたデータを取得します🤗
+const geo_data = data.val();
+console.log(geo_data, '取得したデータの塊')
+const key = data.key;
+console.log(key, 'データの塊にアクセス')
+
+// es6のテンプレートリテラル
+let h = `
+        <tr>
+          <th>${Date(geo_data.time).slice(4, 25)}</th>
+          <td>${geo_data.uname}</td>
+          <td>${geo_data.lat}</td>
+          <td>${geo_data.lon}</td>
+          <td><button class="clear" data-a=${key}>削除</button></td>
+        </tr>
+`;
+
+// htmlに埋め込みましょう🤗
+// append();というjqueryのおまじないを使います
+$("#output").append(h);
+});
+
+// 削除をボタンを押したら⇨アラートが出れば成功！！
+$(document).on("click", ".clear", function () {
+  let v = $(this).data("a");
+  //  console.log(v, "おや");
+  //  let aa = $(this).data("a"); //data-a data-は省略するので　「a」
+   console.log(v, "カギ");
+  remove(ref(db, "05-js-kadai/" + v));
+  location.reload(); // jsのおまじない、本来はfirebase側に onChildRemoved
+});
+
+</script>
+</body>
+</html>
